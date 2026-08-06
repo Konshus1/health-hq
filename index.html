@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Health HQ">
+<meta name="theme-color" content="#fdfbf8">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='180' height='180' rx='40' fill='%23fdeee2'/%3E%3Ctext x='50%25' y='54%25' font-size='104' text-anchor='middle' dominant-baseline='central'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E">
+<title>Health HQ</title>
+<style>
+  :root{
+    --bg:#fdfbf8; --bg2:#f8f4ee; --card:#ffffff; --ink:#39332c; --muted:#a79c8e;
+    --line:#f0ebe3; --accent:#e88a72; --accent-ink:#c26a52; --accent-soft:#fdeee7;
+    --sev-green:#d6efd9; --sev-green-ln:#aadcb2; --sev-green-ink:#4f8a58;
+    --sev-yellow:#f8edbe; --sev-yellow-ln:#ecd98f; --sev-yellow-ink:#9a7f2b;
+    --sev-red:#fad3cb; --sev-red-ln:#f0ad9e; --sev-red-ink:#c26450;
+    --sev-none:#eeeae2;
+    --meds:#2bb4a0; --meds-bg:#e4f6f1; --sleep:#8b97e6; --sleep-bg:#edeefb;
+    --shadow:0 1px 2px rgba(80,60,40,.04), 0 6px 18px rgba(80,60,40,.05);
+    --radius:18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    background:linear-gradient(180deg,var(--bg),var(--bg2)); background-attachment:fixed;
+    color:var(--ink); line-height:1.45; -webkit-font-smoothing:antialiased; padding:0 0 84px; min-height:100vh}
+  .wrap{max-width:480px; margin:0 auto; padding:16px 15px}
+  h1{font-size:21px; margin:0; letter-spacing:-.4px}
+  .sub{color:#b19277; font-size:13px; margin:2px 0 0}
+  header{background:linear-gradient(135deg,#fff6f0,#fdeee2); border:1px solid #f8e2d3; border-radius:20px;
+    padding:15px 16px; box-shadow:var(--shadow); position:relative; overflow:hidden; margin-bottom:14px}
+  header:after{content:"🌿"; position:absolute; right:-4px; top:-8px; font-size:58px; opacity:.13; transform:rotate(12deg)}
+
+  section{display:none} section.on{display:block}
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:15px 15px; box-shadow:var(--shadow); margin-bottom:13px}
+  .panel h2{font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin:0 0 11px; font-weight:800}
+  .row{display:flex; flex-wrap:wrap; gap:8px}
+
+  /* buttons */
+  .btn{border:1.5px solid var(--line); background:#fff; color:var(--ink); font-family:inherit; font-weight:700;
+    font-size:14px; padding:11px 14px; border-radius:13px; cursor:pointer; transition:all .12s; flex:0 0 auto}
+  .btn:active{transform:scale(.97)}
+  .btn.big{width:100%; padding:15px; font-size:15.5px; border-radius:15px}
+  .btn.meds-on{background:var(--meds-bg); border-color:var(--meds); color:#0f8574}
+  .vibe{flex:1; text-align:center; border-radius:13px; padding:13px 6px}
+  .vibe .em{font-size:20px; display:block; margin-bottom:3px}
+  .vibe.sel.g{background:var(--sev-green); border-color:var(--sev-green-ln); color:var(--sev-green-ink)}
+  .vibe.sel.y{background:var(--sev-yellow); border-color:var(--sev-yellow-ln); color:var(--sev-yellow-ink)}
+  .vibe.sel.r{background:var(--sev-red); border-color:var(--sev-red-ln); color:var(--sev-red-ink)}
+
+  .chip{display:inline-flex; align-items:center; gap:6px; border:1.5px solid var(--line); background:#fff;
+    padding:9px 13px; border-radius:999px; font-weight:700; font-size:13.5px; cursor:pointer; transition:all .12s}
+  .chip:active{transform:scale(.96)}
+  .chip.sel{border-color:currentColor}
+  .chip .em{font-size:15px}
+  .chip.add{border-style:dashed; color:var(--accent-ink)}
+
+  /* sleep stepper */
+  .sleeprow{display:flex; align-items:center; gap:12px}
+  .step{width:44px; height:44px; border-radius:13px; border:1.5px solid var(--line); background:#fff; font-size:22px; font-weight:800; color:var(--sleep); cursor:pointer; line-height:1}
+  .step:active{transform:scale(.94)}
+  .sleepval{flex:1; text-align:center}
+  .sleepval b{font-size:22px} .sleepval span{color:var(--muted); font-size:13px; font-weight:700}
+  .sleepbar{height:8px; border-radius:8px; background:var(--sleep-bg); margin-top:9px; overflow:hidden}
+  .sleepbar i{display:block; height:100%; background:var(--sleep); opacity:.6; border-radius:8px; transition:width .15s}
+
+  textarea{width:100%; border:1.5px solid var(--line); border-radius:13px; padding:11px; font-family:inherit; font-size:14px; resize:none; color:var(--ink)}
+  .saved{text-align:center; color:var(--meds); font-weight:700; font-size:12.5px; height:16px; margin-top:4px}
+
+  /* calendar */
+  .month{font-weight:800; font-size:15px; display:flex; justify-content:space-between; align-items:center; margin:2px 2px 12px}
+  .month button{border:0; background:#f0e9df; width:32px; height:32px; border-radius:10px; font-size:16px; cursor:pointer; color:#8a7860; font-weight:800}
+  .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px}
+  .dow{text-align:center; font-size:10.5px; color:var(--muted); font-weight:800; padding-bottom:2px}
+  .day{background:var(--sev-none); border:1px solid var(--line); border-radius:12px; min-height:56px; padding:4px 3px 8px; position:relative; overflow:hidden; cursor:pointer}
+  .day.empty{background:transparent; border:0; cursor:default}
+  .day.future{background:#fbf9f5; border-style:dashed; border-color:#eee7dc}
+  .day .num{font-size:10.5px; color:#9c9182; font-weight:800}
+  .day.g{background:var(--sev-green); border-color:var(--sev-green-ln)}
+  .day.y{background:var(--sev-yellow); border-color:var(--sev-yellow-ln)}
+  .day.r{background:var(--sev-red); border-color:var(--sev-red-ln)}
+  .day.today{box-shadow:0 0 0 2.5px var(--accent-soft); border-color:var(--accent)}
+  .day.today .num{color:var(--accent)}
+  .day .ic{display:flex; flex-wrap:wrap; gap:1px; margin-top:3px; font-size:12px; line-height:1}
+  .day .med{position:absolute; top:3px; right:3px; font-size:8.5px; opacity:.7}
+  .day .sb{position:absolute; left:4px; right:4px; bottom:3px; height:3.5px; border-radius:4px; background:rgba(139,151,230,.16); overflow:hidden}
+  .day .sb i{display:block; height:100%; background:var(--sleep); opacity:.6; border-radius:4px}
+
+  /* timeline */
+  .tl-empty{color:var(--muted); text-align:center; padding:24px 10px; font-size:14px}
+  .ev{display:flex; gap:11px; align-items:flex-start; background:var(--card); border:1px solid var(--line); border-radius:15px; padding:11px 12px; margin-bottom:8px; box-shadow:var(--shadow); position:relative}
+  .ev .bar{position:absolute; left:0; top:11px; bottom:11px; width:4px; border-radius:4px}
+  .ev .bar.g{background:var(--sev-green-ln)} .ev .bar.y{background:var(--sev-yellow-ln)} .ev .bar.r{background:var(--sev-red-ln)}
+  .ev .d{font-weight:800; font-size:12px; color:var(--muted); width:52px; flex:0 0 auto; margin-left:7px; padding-top:2px}
+  .ev .body{flex:1; min-width:0}
+  .ev .t{font-weight:700; font-size:14px; margin:0}
+  .ev .n{color:#a2957f; font-size:12.5px; margin:2px 0 0}
+
+  /* symptoms manager */
+  .sym-item{display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--line)}
+  .sym-item:last-child{border-bottom:0}
+  .sym-em{font-size:20px; width:30px; text-align:center}
+  .sym-lbl{flex:1; font-weight:700; font-size:14px}
+  .sym-x{border:0; background:none; color:#cbb; font-size:19px; cursor:pointer; padding:4px 6px}
+  .mini{border:1.5px solid var(--line); background:#fff; border-radius:10px; padding:7px 10px; font-weight:700; font-size:12.5px; cursor:pointer; color:#8a7860}
+  .swrap{display:flex; gap:7px; flex-wrap:wrap; align-items:center; margin-top:10px}
+  input[type=text]{border:1.5px solid var(--line); border-radius:12px; padding:11px 12px; font-family:inherit; font-size:14px; color:var(--ink); flex:1; min-width:120px}
+  .hint{color:var(--muted); font-size:12px; margin:8px 0 0}
+  .swatch{width:26px; height:26px; border-radius:8px; cursor:pointer; border:2px solid #fff; box-shadow:0 0 0 1.5px var(--line)}
+  .swatch.sel{box-shadow:0 0 0 2.5px var(--ink)}
+
+  /* bottom nav */
+  nav{position:fixed; bottom:0; left:0; right:0; background:rgba(255,255,255,.92); backdrop-filter:blur(10px);
+    border-top:1px solid var(--line); display:flex; padding:7px 8px calc(7px + env(safe-area-inset-bottom)); z-index:20}
+  nav button{flex:1; border:0; background:none; font-family:inherit; color:var(--muted); font-weight:700; font-size:11px; padding:5px 2px; cursor:pointer}
+  nav button .ni{font-size:19px; display:block; margin-bottom:1px}
+  nav button.on{color:var(--accent-ink)}
+
+  .flag{background:var(--accent-soft); color:var(--accent-ink); border:1px solid #f7ddd2; font-size:12px; text-align:center; padding:8px; border-radius:11px; margin-bottom:13px; font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="flag" id="flag">✨ Your working v1 · everything saves on your phone · 100% yours</div>
+  <header>
+    <h1>Health HQ 🌿</h1>
+    <p class="sub" id="hsub">Tap to log · it all stays right here on your phone</p>
+  </header>
+
+  <!-- TODAY -->
+  <section id="today" class="on">
+    <div class="panel">
+      <h2 id="todaydate">Today</h2>
+      <button class="btn big" id="medsBtn" onclick="toggleMeds()">💊 Took my meds tonight</button>
+    </div>
+
+    <div class="panel">
+      <h2>How’s the day feeling?</h2>
+      <div class="row">
+        <button class="btn vibe" data-v="g" onclick="setVibe('g')"><span class="em">🙂</span>Good</button>
+        <button class="btn vibe" data-v="y" onclick="setVibe('y')"><span class="em">😐</span>Okay</button>
+        <button class="btn vibe" data-v="r" onclick="setVibe('r')"><span class="em">😣</span>Rough</button>
+      </div>
+      <p class="hint">Leave blank for a quiet day — it just stays grey.</p>
+    </div>
+
+    <div class="panel">
+      <h2>What are you experiencing?</h2>
+      <div class="row" id="symRow"></div>
+      <p class="hint">Tap any that apply. Add anything new with ＋ — I’ll guess an icon, you can change it.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Sleep last night</h2>
+      <div class="sleeprow">
+        <button class="step" onclick="bumpSleep(-0.5)">–</button>
+        <div class="sleepval"><b id="sleepNum">7</b><span> hrs</span></div>
+        <button class="step" onclick="bumpSleep(0.5)">＋</button>
+      </div>
+      <div class="sleepbar"><i id="sleepFill" style="width:70%"></i></div>
+    </div>
+
+    <div class="panel">
+      <h2>Anything to remember? (optional)</h2>
+      <textarea id="noteBox" rows="2" placeholder="e.g. after coffee, crowded store, before a big test…" oninput="saveNote()"></textarea>
+    </div>
+    <div class="saved" id="savedMsg"></div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section id="calendar">
+    <div class="panel">
+      <div class="month"><button onclick="moveMonth(-1)">‹</button><span id="monthLbl">—</span><button onclick="moveMonth(1)">›</button></div>
+      <div class="grid" id="calGrid"></div>
+      <p class="hint" style="margin-top:12px"><b>Color</b> = the day’s vibe · <b>icons</b> = what happened · <b>💊</b> = meds · little <b>bar</b> = sleep. Tap a day to see it.</p>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section id="timeline">
+    <div class="panel">
+      <h2>Your timeline</h2>
+      <div id="tlList"></div>
+    </div>
+  </section>
+
+  <!-- SYMPTOMS / SETTINGS -->
+  <section id="manage">
+    <div class="panel">
+      <h2>Your symptoms — add anything</h2>
+      <div id="symList"></div>
+      <div class="swrap">
+        <input type="text" id="newSym" placeholder="Type any symptom… (e.g. brain fog)" onkeydown="if(event.key==='Enter')previewSym()">
+        <button class="mini" onclick="previewSym()">Preview</button>
+      </div>
+      <div id="symPreview"></div>
+      <p class="hint">💡 This is the AI-powered part: tell it <i>anything</i> and it files it with an icon &amp; color. (For now I keyword-guess the icon — once this connects to your agent, it’ll truly understand what you type.)</p>
+    </div>
+    <div class="panel">
+      <h2>Your data — 100% yours</h2>
+      <div class="row">
+        <button class="mini" onclick="exportData()">⬇︎ Save a backup</button>
+        <button class="mini" onclick="document.getElementById('importFile').click()">⬆︎ Restore backup</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+      </div>
+      <p class="hint">Everything lives on this phone only. Use “Save a backup” before I email you a new version, then “Restore” to bring your entries over. Nothing is sent anywhere.</p>
+    </div>
+  </section>
+</div>
+
+<nav>
+  <button class="on" data-t="today" onclick="tab('today')"><span class="ni">✍️</span>Today</button>
+  <button data-t="calendar" onclick="tab('calendar')"><span class="ni">📅</span>Calendar</button>
+  <button data-t="timeline" onclick="tab('timeline')"><span class="ni">📜</span>Timeline</button>
+  <button data-t="manage" onclick="tab('manage')"><span class="ni">🎨</span>Symptoms</button>
+</nav>
+
+<script>
+"use strict";
+/* ---------- storage ---------- */
+var KEY="healthHQ_v1";
+var PALETTE=["#8a6bd8","#e0a84a","#2bb4a0","#e88a72","#5aa2e0","#d86c9e","#6bbf59","#c58bd0","#e0b04a","#5fb0c4"];
+var DEFAULT={
+  symptoms:[
+    {id:"s_mig", label:"Migraine", emoji:"🤕", color:"#e88a72"},
+    {id:"s_ibs", label:"IBS / gut", emoji:"🌊", color:"#e0a84a"},
+    {id:"s_diz", label:"Dizzy", emoji:"🌀", color:"#8a6bd8"}
+  ],
+  days:{},           /* "YYYY-MM-DD": {vibe, meds, symptoms:[id], sleep, note} */
+  nextColor:0
+};
+function load(){ try{var d=JSON.parse(localStorage.getItem(KEY)); if(d&&d.symptoms) return d;}catch(e){} return JSON.parse(JSON.stringify(DEFAULT)); }
+function save(){ try{localStorage.setItem(KEY, JSON.stringify(DB));}catch(e){} }
+var DB=load();
+
+/* ---------- date helpers ---------- */
+function pad(n){return (n<10?"0":"")+n;}
+function keyOf(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+var NOW=new Date();
+var TODAY_KEY=keyOf(NOW);
+var viewYear=NOW.getFullYear(), viewMonth=NOW.getMonth();
+function dayRec(k){ if(!DB.days[k]) DB.days[k]={vibe:null,meds:false,symptoms:[],sleep:7,note:""}; return DB.days[k]; }
+
+/* ---------- TODAY screen ---------- */
+function renderToday(){
+  var r=dayRec(TODAY_KEY);
+  var dObj=new Date();
+  document.getElementById("todaydate").textContent="Today · "+dObj.toLocaleDateString(undefined,{weekday:"long",month:"short",day:"numeric"});
+  document.getElementById("medsBtn").className="btn big"+(r.meds?" meds-on":"");
+  document.getElementById("medsBtn").textContent=(r.meds?"✅ Meds taken tonight":"💊 Took my meds tonight");
+  document.querySelectorAll(".vibe").forEach(function(b){
+    b.className="btn vibe"+(r.vibe===b.dataset.v?(" sel "+b.dataset.v):"");
+  });
+  // symptom chips
+  var row=document.getElementById("symRow"); row.innerHTML="";
+  DB.symptoms.forEach(function(s){
+    var on=r.symptoms.indexOf(s.id)>-1;
+    var c=document.createElement("button");
+    c.className="chip"+(on?" sel":""); c.style.color=on?s.color:"var(--ink)";
+    if(on){c.style.background=hexA(s.color,.12); c.style.borderColor=s.color;}
+    c.innerHTML='<span class="em">'+s.emoji+'</span>'+esc(s.label);
+    c.onclick=function(){ toggleSym(s.id); };
+    row.appendChild(c);
+  });
+  var add=document.createElement("button");
+  add.className="chip add"; add.innerHTML='＋ add'; add.onclick=function(){ tab('manage'); document.getElementById("newSym").focus(); };
+  row.appendChild(add);
+  // sleep
+  document.getElementById("sleepNum").textContent=r.sleep;
+  document.getElementById("sleepFill").style.width=Math.max(0,Math.min(100,(r.sleep/11)*100))+"%";
+  document.getElementById("noteBox").value=r.note||"";
+}
+function flash(){ var m=document.getElementById("savedMsg"); m.textContent="saved ✓"; clearTimeout(flash._t); flash._t=setTimeout(function(){m.textContent="";},1100); }
+function toggleMeds(){ var r=dayRec(TODAY_KEY); r.meds=!r.meds; save(); renderToday(); flash(); }
+function setVibe(v){ var r=dayRec(TODAY_KEY); r.vibe=(r.vibe===v?null:v); save(); renderToday(); flash(); }
+function toggleSym(id){ var r=dayRec(TODAY_KEY); var i=r.symptoms.indexOf(id); if(i>-1)r.symptoms.splice(i,1); else r.symptoms.push(id); save(); renderToday(); flash(); }
+function bumpSleep(d){ var r=dayRec(TODAY_KEY); r.sleep=Math.max(0,Math.min(14, Math.round((r.sleep+d)*2)/2)); save(); renderToday(); flash(); }
+function saveNote(){ var r=dayRec(TODAY_KEY); r.note=document.getElementById("noteBox").value; save(); flash(); }
+
+/* ---------- CALENDAR ---------- */
+var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function moveMonth(d){ viewMonth+=d; if(viewMonth<0){viewMonth=11;viewYear--;} if(viewMonth>11){viewMonth=0;viewYear++;} renderCal(); }
+function renderCal(){
+  document.getElementById("monthLbl").textContent=MONTHS[viewMonth]+" "+viewYear;
+  var g=document.getElementById("calGrid"); g.innerHTML="";
+  ["S","M","T","W","T","F","S"].forEach(function(d){ var e=document.createElement("div"); e.className="dow"; e.textContent=d; g.appendChild(e); });
+  var first=new Date(viewYear,viewMonth,1).getDay();
+  var days=new Date(viewYear,viewMonth+1,0).getDate();
+  for(var i=0;i<first;i++){ var em=document.createElement("div"); em.className="day empty"; g.appendChild(em); }
+  for(var dn=1;dn<=days;dn++){
+    var dt=new Date(viewYear,viewMonth,dn); var k=keyOf(dt); var r=DB.days[k];
+    var cell=document.createElement("div"); cell.className="day";
+    var isFuture=dt.setHours(0,0,0,0)>new Date().setHours(0,0,0,0);
+    if(isFuture && !r) cell.className+=" future";
+    if(r&&r.vibe) cell.className+=" "+r.vibe;
+    if(k===TODAY_KEY) cell.className+=" today";
+    var html='<span class="num">'+dn+'</span>';
+    if(r&&r.meds) html+='<span class="med">💊</span>';
+    if(r&&r.symptoms&&r.symptoms.length){ html+='<span class="ic">'+r.symptoms.map(function(id){var s=symById(id);return s?s.emoji:"";}).join("")+'</span>'; }
+    if(r&&typeof r.sleep==="number"&&(r.meds||r.vibe||r.symptoms.length||r.note)) html+='<span class="sb"><i style="width:'+Math.max(6,Math.min(100,(r.sleep/11)*100))+'%"></i></span>';
+    cell.innerHTML=html;
+    (function(kk){ cell.onclick=function(){ openDay(kk); }; })(k);
+    g.appendChild(cell);
+  }
+}
+function openDay(k){
+  var r=DB.days[k]; var dt=new Date(k+"T00:00:00");
+  var when=dt.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  if(!r||(!r.vibe&&!r.meds&&!r.symptoms.length&&!r.note)){ alert(when+"\n\nA quiet day — nothing logged."); return; }
+  var vibe=r.vibe==="g"?"Good 🙂":r.vibe==="y"?"Okay 😐":r.vibe==="r"?"Rough 😣":"—";
+  var syms=r.symptoms.map(function(id){var s=symById(id);return s?(s.emoji+" "+s.label):"";}).filter(Boolean).join(", ")||"none";
+  alert(when+"\n\nFeeling: "+vibe+"\nMeds: "+(r.meds?"taken ✓":"not logged")+"\nSymptoms: "+syms+"\nSleep: "+r.sleep+" hrs"+(r.note?("\nNote: "+r.note):""));
+}
+
+/* ---------- TIMELINE ---------- */
+function renderTL(){
+  var keys=Object.keys(DB.days).filter(function(k){var r=DB.days[k];return r.vibe||r.meds||r.symptoms.length||r.note;}).sort().reverse();
+  var box=document.getElementById("tlList");
+  if(!keys.length){ box.innerHTML='<div class="tl-empty">Nothing logged yet.<br>Head to <b>Today</b> and tap a few things — they’ll show up here. 🌿</div>'; return; }
+  box.innerHTML="";
+  keys.forEach(function(k){
+    var r=DB.days[k]; var dt=new Date(k+"T00:00:00");
+    var syms=r.symptoms.map(function(id){var s=symById(id);return s?(s.emoji+" "+s.label):"";}).filter(Boolean).join(" · ");
+    var title = r.vibe==="g"?"Good day":r.vibe==="y"?"Okay day":r.vibe==="r"?"Rough day":"Logged";
+    if(syms) title+=" · "+syms;
+    var bits=[]; if(r.meds)bits.push("meds ✓"); if(typeof r.sleep==="number")bits.push("slept "+r.sleep+"h"); if(r.note)bits.push("“"+r.note+"”");
+    var ev=document.createElement("div"); ev.className="ev";
+    ev.innerHTML=(r.vibe?'<span class="bar '+r.vibe+'"></span>':'')+
+      '<span class="d">'+dt.toLocaleDateString(undefined,{month:"short",day:"numeric"})+'</span>'+
+      '<div class="body"><p class="t">'+esc(title)+'</p>'+(bits.length?'<p class="n">'+esc(bits.join(" · "))+'</p>':'')+'</div>';
+    box.appendChild(ev);
+  });
+}
+
+/* ---------- SYMPTOMS manager ---------- */
+function renderSyms(){
+  var box=document.getElementById("symList"); box.innerHTML="";
+  DB.symptoms.forEach(function(s){
+    var it=document.createElement("div"); it.className="sym-item";
+    it.innerHTML='<span class="sym-em" style="color:'+s.color+'">'+s.emoji+'</span><span class="sym-lbl">'+esc(s.label)+'</span>';
+    var del=document.createElement("button"); del.className="sym-x"; del.textContent="✕";
+    del.onclick=function(){ if(confirm("Remove “"+s.label+"”? (past entries keep it)")){ DB.symptoms=DB.symptoms.filter(function(x){return x.id!==s.id;}); save(); renderSyms(); renderToday(); } };
+    it.appendChild(del); box.appendChild(it);
+  });
+}
+/* keyword -> emoji guesser (stand-in for the AI, until it connects to the agent) */
+var GUESS=[
+  [["migraine","headache","head "],"🤕"],[["dizzy","vertigo","balance","vestibular","spin"],"🌀"],
+  [["ibs","gut","stomach","nausea","nause","bowel","digest","bloat","cramp","poop"],"🌊"],
+  [["tired","fatigue","exhaust","sleepy","drowsy"],"🥱"],[["fog","focus","memory","concentrat","brain"],"🌫️"],
+  [["pain","ache","joint","back","muscle","sore"],"🩹"],[["anx","panic","stress","worry","mood","depress","sad","overwhelm"],"😣"],
+  [["eye","vision","blur","light sensit","photo"],"👁️"],[["fever","temp","hot","chill"],"🌡️"],
+  [["breath","cough","chest","lung","wheez"],"🫁"],[["heart","palpit","pulse"],"💓"],
+  [["period","menstru","cycle"],"🩸"],[["skin","rash","itch","hive"],"🌸"],[["appetite","hungry","eat"],"🍽️"],[["throat","sinus","congest","cold ","flu"],"🤧"]
+];
+function guessEmoji(t){ t=" "+t.toLowerCase()+" "; for(var i=0;i<GUESS.length;i++){ for(var j=0;j<GUESS[i][0].length;j++){ if(t.indexOf(GUESS[i][0][j])>-1) return GUESS[i][1]; } } return "🔹"; }
+var _pv=null;
+function previewSym(){
+  var t=document.getElementById("newSym").value.trim(); if(!t) return;
+  var color=PALETTE[DB.nextColor % PALETTE.length];
+  _pv={label:t, emoji:guessEmoji(t), color:color};
+  var box=document.getElementById("symPreview");
+  box.innerHTML='<div class="swrap"><span class="chip sel" style="color:'+_pv.color+';border-color:'+_pv.color+';background:'+hexA(_pv.color,.12)+'"><span class="em" id="pvEm">'+_pv.emoji+'</span>'+esc(_pv.label)+'</span>'+
+    '<input type="text" id="pvEmIn" placeholder="icon" value="'+_pv.emoji+'" style="max-width:64px;text-align:center" oninput="pvSetEmoji(this.value)"></div>'+
+    '<div class="swrap" id="pvSw"></div>'+
+    '<div class="swrap"><button class="btn big" style="background:'+hexA(_pv.color,.14)+';border-color:'+_pv.color+';color:'+_pv.color+'" onclick="addSym()">Add “'+esc(_pv.label)+'” to my symptoms</button></div>';
+  var sw=document.getElementById("pvSw");
+  PALETTE.forEach(function(c){ var d=document.createElement("div"); d.className="swatch"+(c===_pv.color?" sel":""); d.style.background=c; d.onclick=function(){ _pv.color=c; previewRefreshColor(); }; sw.appendChild(d); });
+}
+function pvSetEmoji(v){ if(_pv){ _pv.emoji=v||"🔹"; var e=document.getElementById("pvEm"); if(e)e.textContent=_pv.emoji; } }
+function previewRefreshColor(){ if(_pv){ var t=document.getElementById("newSym").value.trim(); document.getElementById("newSym").value=t; previewSym(); } }
+function addSym(){
+  if(!_pv) return; var id="s_"+Date.now();
+  DB.symptoms.push({id:id,label:_pv.label,emoji:_pv.emoji||"🔹",color:_pv.color}); DB.nextColor++; save();
+  _pv=null; document.getElementById("newSym").value=""; document.getElementById("symPreview").innerHTML="";
+  renderSyms(); renderToday(); alert("Added! It’s now a tappable symptom on your Today screen. 🌿");
+}
+
+/* ---------- data export / import ---------- */
+function exportData(){
+  var blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="health_hq_backup.json"; a.click();
+}
+function importData(ev){
+  var f=ev.target.files[0]; if(!f) return; var rd=new FileReader();
+  rd.onload=function(){ try{ var d=JSON.parse(rd.result); if(d&&d.symptoms&&d.days){ DB=d; save(); renderAll(); alert("Restored your data ✓"); } else alert("That file didn’t look right."); }catch(e){ alert("Couldn’t read that file."); } };
+  rd.readAsText(f);
+}
+
+/* ---------- utils + nav ---------- */
+function symById(id){ for(var i=0;i<DB.symptoms.length;i++) if(DB.symptoms[i].id===id) return DB.symptoms[i]; return null; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+function hexA(hex,a){ var n=hex.replace("#",""); var r=parseInt(n.substr(0,2),16),g=parseInt(n.substr(2,2),16),b=parseInt(n.substr(4,2),16); return "rgba("+r+","+g+","+b+","+a+")"; }
+function tab(name){
+  document.querySelectorAll("section").forEach(function(s){ s.className=(s.id===name?"on":""); });
+  document.querySelectorAll("nav button").forEach(function(b){ b.className=(b.dataset.t===name?"on":""); });
+  if(name==="calendar")renderCal(); if(name==="timeline")renderTL(); if(name==="manage")renderSyms(); if(name==="today")renderToday();
+  window.scrollTo(0,0);
+}
+function renderAll(){ renderToday(); renderCal(); renderTL(); renderSyms(); }
+renderAll();
+</script>
+</body>
+</html>
