@@ -69,6 +69,11 @@
   .saved{text-align:center; color:var(--meds); font-weight:700; font-size:12.5px; height:16px; margin-top:4px}
   .hint{color:var(--muted); font-size:12px; margin:8px 0 0}
   .ai-badge{display:inline-block; background:linear-gradient(135deg,#efeafd,#e6e0fb); color:#6b57c4; font-weight:800; font-size:10px; letter-spacing:.4px; padding:3px 8px; border-radius:999px; vertical-align:middle; margin-left:6px}
+  .insight{background:linear-gradient(135deg,#f3effe,#ece6fc); border:1px solid #ddd2fa; border-radius:16px; padding:13px 14px; margin-bottom:13px; box-shadow:var(--shadow); position:relative}
+  .insight .il{font-size:10px; font-weight:800; letter-spacing:.4px; color:#7a67cf; text-transform:uppercase; margin:0 0 5px}
+  .insight .it{font-size:14px; font-weight:600; color:#40357a; margin:0; padding-right:18px; white-space:pre-line}
+  .insight .ix{position:absolute; top:8px; right:11px; border:0; background:none; color:#a99fdb; font-size:16px; cursor:pointer}
+  .insight .isub{font-size:11px; color:#9186c9; margin:7px 0 0; font-weight:700; line-height:1.35}
 
   /* calendar */
   .month{font-weight:800; font-size:15px; display:flex; justify-content:space-between; align-items:center; margin:2px 2px 12px}
@@ -153,6 +158,7 @@
 
   <!-- TODAY -->
   <section id="today" class="on">
+    <div id="insightCard"></div>
     <div class="panel">
       <h2 id="todaydate">Today</h2>
       <button class="btn big" id="medsBtn" onclick="toggleMeds()">💊 Took my meds tonight</button>
@@ -298,7 +304,48 @@ function renderToday(){
   document.getElementById("sleepNum").textContent=r.sleep;
   document.getElementById("sleepFill").style.width=Math.max(0,Math.min(100,(r.sleep/11)*100))+"%";
   document.getElementById("noteBox").value=r.note||"";
+  renderInsight();
 }
+/* ---------- proactive INSIGHT card (preview of the agent feature) ---------- */
+var _insightDismissed=false;
+function computeInsight(){
+  var rows=[]; Object.keys(DB.days).forEach(function(k){var r=DB.days[k]; if(r.vibe||r.meds||r.symptoms.length||r.note||typeof r.sleep==="number") rows.push({k:k,dt:new Date(k+"T00:00:00"),r:r});});
+  rows.sort(function(a,b){return a.dt-b.dt;});
+  var today=new Date(); today.setHours(0,0,0,0);
+  // A) symptom often follows short sleep
+  for(var si=0; si<DB.symptoms.length; si++){ var s=DB.symptoms[si];
+    var occ=rows.filter(function(x){return x.r.symptoms.indexOf(s.id)>-1;});
+    if(occ.length>=3){ var low=occ.filter(function(x){return typeof x.r.sleep==="number"&&x.r.sleep<6;}).length;
+      if(low>=2 && low/occ.length>=0.6) return {text:s.emoji+" Your "+s.label+" days often follow short sleep — "+low+" of your last "+occ.length+" came after nights under 6 hours.", real:true}; } }
+  // B) weekend clustering
+  for(var sj=0; sj<DB.symptoms.length; sj++){ var s2=DB.symptoms[sj];
+    var o2=rows.filter(function(x){return x.r.symptoms.indexOf(s2.id)>-1;});
+    if(o2.length>=3){ var wk=o2.filter(function(x){var d=x.dt.getDay(); return d===0||d===6;}).length;
+      if(wk/o2.length>=0.6) return {text:s2.emoji+" Your "+s2.label+" shows up mostly on weekends — "+wk+" of "+o2.length+" times.", real:true}; } }
+  // C) rough week
+  var rw=rows.filter(function(x){var diff=(today-x.dt)/86400000; return diff>=0&&diff<7&&x.r.vibe==="r";}).length;
+  if(rw>=3) return {text:"You've had "+rw+" rough days this week — more than usual. Be gentle with yourself. 🌿", real:true};
+  // D) meds streak
+  var streak=0,d=new Date(); d.setHours(0,0,0,0);
+  for(var i=0;i<400;i++){var rr=DB.days[keyOf(d)]; if(rr&&rr.meds)streak++; else if(i>0)break; d.setDate(d.getDate()-1);}
+  if(streak>=3) return {text:"💊 "+streak+"-night meds streak 🔥 Nice consistency — keep it going.", real:true};
+  // E) most common this month
+  var counts={}; rows.forEach(function(x){ if(x.dt.getMonth()===today.getMonth()&&x.dt.getFullYear()===today.getFullYear()) x.r.symptoms.forEach(function(id){counts[id]=(counts[id]||0)+1;}); });
+  var top=null,tn=0; Object.keys(counts).forEach(function(id){if(counts[id]>tn){tn=counts[id];top=id;}});
+  if(top&&tn>=2){var ts=symById(top); if(ts) return {text:ts.emoji+" Your most-logged this month: "+ts.label+" ("+tn+" days).", real:true};}
+  // F) not enough data -> example so you can see the feature
+  return {text:"🌀 (Example) “Your dizzy days often follow nights under 6 hours of sleep.”\nKeep logging and I’ll start spotting real patterns like this.", real:false};
+}
+function renderInsight(){
+  var box=document.getElementById("insightCard"); if(!box) return;
+  if(_insightDismissed){ box.innerHTML=""; return; }
+  var ins=computeInsight();
+  box.innerHTML='<div class="insight"><button class="ix" onclick="dismissInsight()">✕</button>'+
+    '<p class="il">💡 Insight'+(ins.real?"":" · preview")+'</p>'+
+    '<p class="it">'+esc(ins.text)+'</p>'+
+    '<p class="isub">'+(ins.real?"✨ spotted from your own data — the real agent will find deeper patterns AND text you these on a schedule":"✨ this is where your agent’s insights will live — a card here + a scheduled nudge to your phone")+'</p></div>';
+}
+function dismissInsight(){ _insightDismissed=true; renderInsight(); }
 function flash(){ var m=document.getElementById("savedMsg"); m.textContent="saved ✓"; clearTimeout(flash._t); flash._t=setTimeout(function(){m.textContent="";},1100); }
 function toggleMeds(){ var r=dayRec(TODAY_KEY); r.meds=!r.meds; save(); renderToday(); flash(); }
 function setVibe(v){ var r=dayRec(TODAY_KEY); r.vibe=(r.vibe===v?null:v); save(); renderToday(); flash(); }
@@ -525,7 +572,7 @@ function renderAsk(){
       var b=document.createElement("button"); b.textContent=t; b.onclick=function(){ document.getElementById("askIn").value=t; askSubmit(); }; sq.appendChild(b);
     });
   }
-  if(!_askShown){ addBub("a","Hi Lily 🌿 Ask me anything about what you’ve logged — like “how many stomach days this month?” or “how’s my sleep?”"); _askShown=true; }
+  if(!_askShown){ addBub("a","Hi there 🌿 Ask me anything about what you’ve logged — like “how many stomach days this month?” or “how’s my sleep?”"); _askShown=true; }
 }
 function addBub(who,text){ var m=document.getElementById("askMsgs"); var d=document.createElement("div"); d.className="bub "+who; d.textContent=text; m.appendChild(d); m.scrollTop=m.scrollHeight; }
 function askSubmit(){
